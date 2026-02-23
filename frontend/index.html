@@ -1,0 +1,213 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0, user-scalable=yes">
+    <meta name="description" content="從 YouTube 連結自動產生吉他簡譜、指彈譜與鋼琴譜 - AI 驅動的音樂轉譜工具">
+    <meta name="theme-color" content="#6366f1">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <link rel="manifest" href="/public/manifest.json">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="styles.css">
+    <title>🎵 Music Tab Finder - AI 音樂轉譜助手</title>
+</head>
+<body>
+    <!-- 背景動畫 -->
+    <div class="bg-animation">
+        <div class="bg-orb bg-orb-1"></div>
+        <div class="bg-orb bg-orb-2"></div>
+        <div class="bg-orb bg-orb-3"></div>
+    </div>
+
+    <div id="app">
+        <!-- 頂部導航 -->
+        <header class="header">
+            <div class="header-content">
+                <div class="logo">
+                    <span class="logo-icon">🎸</span>
+                    <span class="logo-text">Tab Finder</span>
+                </div>
+                <nav class="nav-tabs">
+                    <button class="nav-tab active" data-tab="transcribe" onclick="switchTab('transcribe')">
+                        <span class="nav-icon">🎵</span>
+                        <span class="nav-label">轉譜</span>
+                    </button>
+                    <button class="nav-tab" data-tab="history" onclick="switchTab('history')">
+                        <span class="nav-icon">📋</span>
+                        <span class="nav-label">歷史</span>
+                    </button>
+                    <button class="nav-tab" data-tab="favorites" onclick="switchTab('favorites')">
+                        <span class="nav-icon">⭐</span>
+                        <span class="nav-label">收藏</span>
+                    </button>
+                </nav>
+            </div>
+        </header>
+
+        <!-- 主內容區 -->
+        <main class="main-content">
+            <!-- ========== 轉譜頁面 ========== -->
+            <section id="tab-transcribe" class="tab-content active">
+                <div class="hero-section">
+                    <h1 class="hero-title">
+                        <span class="gradient-text">聽到喜歡的歌？</span>
+                        <br>馬上變成樂譜 🎶
+                    </h1>
+                    <p class="hero-subtitle">貼上 YouTube 連結，AI 自動為你產生吉他簡譜、指彈 Tab 或鋼琴譜</p>
+                </div>
+
+                <!-- YouTube 輸入區 -->
+                <div class="input-card glass-card">
+                    <div class="input-group">
+                        <div class="input-icon">▶️</div>
+                        <input
+                            type="url"
+                            id="youtube-url"
+                            class="url-input"
+                            placeholder="貼上 YouTube 連結... (例：https://www.youtube.com/watch?v=...)"
+                            autocomplete="off"
+                        >
+                        <button id="paste-btn" class="icon-btn" onclick="pasteFromClipboard()" title="從剪貼簿貼上">
+                            📋
+                        </button>
+                    </div>
+
+                    <!-- 樂譜類型選擇 -->
+                    <div class="type-selector">
+                        <button class="type-btn active" data-type="chord_sheet" onclick="selectType('chord_sheet')">
+                            <span class="type-icon">🎤</span>
+                            <span class="type-name">彈唱簡譜</span>
+                            <span class="type-desc">和弦 + 旋律</span>
+                        </button>
+                        <button class="type-btn" data-type="fingerstyle_tab" onclick="selectType('fingerstyle_tab')">
+                            <span class="type-icon">🎸</span>
+                            <span class="type-name">指彈六線譜</span>
+                            <span class="type-desc">Fingerstyle Tab</span>
+                        </button>
+                        <button class="type-btn" data-type="piano_sheet" onclick="selectType('piano_sheet')">
+                            <span class="type-icon">🎹</span>
+                            <span class="type-name">鋼琴簡譜</span>
+                            <span class="type-desc">雙手簡譜</span>
+                        </button>
+                    </div>
+
+                    <!-- 進階設定 -->
+                    <div class="advanced-toggle" onclick="toggleAdvanced()">
+                        <span>⚙️ 進階設定</span>
+                        <span id="advanced-arrow" class="arrow">▼</span>
+                    </div>
+                    <div id="advanced-settings" class="advanced-settings hidden">
+                        <div class="setting-row">
+                            <label for="key-select">調號：</label>
+                            <select id="key-select" class="setting-select">
+                                <option value="0">C 大調（原調）</option>
+                                <option value="2">D 大調</option>
+                                <option value="4">E 大調</option>
+                                <option value="5">F 大調</option>
+                                <option value="7">G 大調</option>
+                                <option value="9">A 大調</option>
+                                <option value="11">B 大調</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <!-- 開始按鈕 -->
+                    <button id="transcribe-btn" class="primary-btn" onclick="startTranscribe()">
+                        <span class="btn-text">🚀 開始轉譜</span>
+                        <span class="btn-loading hidden">
+                            <span class="spinner"></span>
+                            轉譜中...
+                        </span>
+                    </button>
+                </div>
+
+                <!-- 進度顯示 -->
+                <div id="progress-section" class="progress-section hidden">
+                    <div class="progress-card glass-card">
+                        <div class="progress-steps">
+                            <div class="progress-step" id="step-download">
+                                <div class="step-indicator"><span class="step-dot"></span></div>
+                                <span class="step-text">下載 YouTube 音訊</span>
+                            </div>
+                            <div class="progress-step" id="step-analyze">
+                                <div class="step-indicator"><span class="step-dot"></span></div>
+                                <span class="step-text">AI 音訊分析</span>
+                            </div>
+                            <div class="progress-step" id="step-generate">
+                                <div class="step-indicator"><span class="step-dot"></span></div>
+                                <span class="step-text">產生樂譜</span>
+                            </div>
+                        </div>
+                        <div class="progress-bar">
+                            <div id="progress-fill" class="progress-fill"></div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 結果顯示 -->
+                <div id="result-section" class="result-section hidden">
+                    <div class="result-card glass-card">
+                        <div class="result-header">
+                            <div class="result-info">
+                                <h2 id="result-title" class="result-title"></h2>
+                                <div class="result-meta">
+                                    <span id="result-tempo" class="meta-tag">♩ = 120</span>
+                                    <span id="result-key" class="meta-tag">C 大調</span>
+                                    <span id="result-type" class="meta-tag"></span>
+                                </div>
+                            </div>
+                            <div class="result-actions">
+                                <button class="action-btn" onclick="copyToClipboard()" title="複製">📋</button>
+                                <button class="action-btn" onclick="toggleFavorite()" title="收藏">
+                                    <span id="fav-icon">☆</span>
+                                </button>
+                            </div>
+                        </div>
+                        <div class="sheet-container">
+                            <pre id="sheet-content" class="sheet-content"></pre>
+                        </div>
+                        <p id="result-note" class="result-note"></p>
+                    </div>
+                </div>
+            </section>
+
+            <!-- ========== 歷史記錄頁面 ========== -->
+            <section id="tab-history" class="tab-content">
+                <h2 class="section-title">📋 轉譜歷史</h2>
+                <div id="history-list" class="record-list">
+                    <div class="empty-state">
+                        <span class="empty-icon">🎵</span>
+                        <p>還沒有轉譜記錄</p>
+                        <p class="empty-hint">試試貼上一個 YouTube 連結吧！</p>
+                    </div>
+                </div>
+            </section>
+
+            <!-- ========== 收藏頁面 ========== -->
+            <section id="tab-favorites" class="tab-content">
+                <h2 class="section-title">⭐ 我的收藏</h2>
+                <div id="favorites-list" class="record-list">
+                    <div class="empty-state">
+                        <span class="empty-icon">⭐</span>
+                        <p>還沒有收藏</p>
+                        <p class="empty-hint">點擊樂譜旁的 ☆ 即可收藏</p>
+                    </div>
+                </div>
+            </section>
+        </main>
+
+        <!-- 底部 -->
+        <footer class="footer">
+            <p>Music Tab Finder &copy; 2026 | Powered by AI 🤖</p>
+        </footer>
+    </div>
+
+    <!-- Toast 通知 -->
+    <div id="toast" class="toast hidden"></div>
+
+    <script src="app.js"></script>
+</body>
+</html>

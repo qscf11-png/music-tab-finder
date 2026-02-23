@@ -1,0 +1,21 @@
+# Python
+__pycache__/
+*.pyc
+.venv/
+*.egg-info/
+
+# 依賴鎖定檔案（可選擇保留）
+# uv.lock
+
+# 下載檔案
+backend/downloads/
+*.wav
+*.mid
+
+# 資料檔案
+backend/history.json
+backend/favorites.json
+
+# 系統檔案
+.DS_Store
+Thumbs.db
