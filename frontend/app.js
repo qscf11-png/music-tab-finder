@@ -369,8 +369,17 @@ async function startTranscribe() {
         showProgress(2, 80);
 
         if (!response.ok) {
-            const error = await response.json();
-            throw new Error(error.detail || '轉譜失敗');
+            let errorMsg = '轉譜失敗';
+            try {
+                const contentType = response.headers.get('content-type') || '';
+                if (contentType.includes('application/json')) {
+                    const error = await response.json();
+                    errorMsg = error.detail || errorMsg;
+                } else {
+                    errorMsg = await response.text() || errorMsg;
+                }
+            } catch { /* 忽略解析錯誤 */ }
+            throw new Error(errorMsg);
         }
 
         const data = await response.json();

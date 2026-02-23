@@ -86,54 +86,62 @@ async def transcribe(request: TranscribeRequest):
     2. 轉換為 MIDI
     3. 產生指定格式的樂譜
     """
-    # Step 1: 下載 YouTube 音訊
-    download_result = download_youtube_audio(request.youtube_url)
-    if not download_result["success"]:
-        raise HTTPException(status_code=400, detail=download_result.get("error", "下載失敗"))
+    import traceback
 
-    wav_path = download_result["file_path"]
-    title = download_result.get("title", "Unknown")
+    try:
+        # Step 1: 下載 YouTube 音訊
+        download_result = download_youtube_audio(request.youtube_url)
+        if not download_result["success"]:
+            raise HTTPException(status_code=400, detail=download_result.get("error", "下載失敗"))
 
-    # Step 2: 音訊轉 MIDI
-    midi_result = audio_to_midi_basic(wav_path)
-    if not midi_result["success"]:
-        raise HTTPException(status_code=500, detail=midi_result.get("error", "轉譜失敗"))
+        wav_path = download_result["file_path"]
+        title = download_result.get("title", "Unknown")
 
-    midi_path = midi_result["midi_path"]
+        # Step 2: 音訊轉 MIDI
+        midi_result = audio_to_midi_basic(wav_path)
+        if not midi_result["success"]:
+            raise HTTPException(status_code=500, detail=midi_result.get("error", "轉譜失敗"))
 
-    # Step 3: 產生樂譜
-    if request.output_type == "chord_sheet":
-        sheet_result = generate_chord_sheet(midi_path, request.key_offset)
-    elif request.output_type == "fingerstyle_tab":
-        sheet_result = generate_fingerstyle_tab(midi_path)
-    elif request.output_type == "piano_sheet":
-        sheet_result = generate_piano_sheet(midi_path, request.key_offset)
-    else:
-        raise HTTPException(status_code=400, detail=f"不支援的輸出類型: {request.output_type}")
+        midi_path = midi_result["midi_path"]
 
-    if not sheet_result["success"]:
-        raise HTTPException(status_code=500, detail=sheet_result.get("error", "樂譜產生失敗"))
+        # Step 3: 產生樂譜
+        if request.output_type == "chord_sheet":
+            sheet_result = generate_chord_sheet(midi_path, request.key_offset)
+        elif request.output_type == "fingerstyle_tab":
+            sheet_result = generate_fingerstyle_tab(midi_path)
+        elif request.output_type == "piano_sheet":
+            sheet_result = generate_piano_sheet(midi_path, request.key_offset)
+        else:
+            raise HTTPException(status_code=400, detail=f"不支援的輸出類型: {request.output_type}")
 
-    # 建立記錄
-    record = {
-        "id": str(uuid.uuid4()),
-        "youtube_url": request.youtube_url,
-        "title": title,
-        "output_type": request.output_type,
-        "content": sheet_result["content"],
-        "tempo": sheet_result.get("tempo", 120),
-        "key": sheet_result.get("key", "C"),
-        "created_at": datetime.now().isoformat(),
-        "midi_note": midi_result.get("note", ""),
-    }
+        if not sheet_result["success"]:
+            raise HTTPException(status_code=500, detail=sheet_result.get("error", "樂譜產生失敗"))
 
-    # 儲存歷史記錄
-    history = load_json(HISTORY_FILE)
-    history.insert(0, record)
-    history = history[:50]  # 只保留最近 50 筆
-    save_json(HISTORY_FILE, history)
+        # 建立記錄
+        record = {
+            "id": str(uuid.uuid4()),
+            "youtube_url": request.youtube_url,
+            "title": title,
+            "output_type": request.output_type,
+            "content": sheet_result["content"],
+            "tempo": sheet_result.get("tempo", 120),
+            "key": sheet_result.get("key", "C"),
+            "created_at": datetime.now().isoformat(),
+            "midi_note": midi_result.get("note", ""),
+        }
 
-    return record
+        # 儲存歷史記錄
+        history = load_json(HISTORY_FILE)
+        history.insert(0, record)
+        history = history[:50]  # 只保留最近 50 筆
+        save_json(HISTORY_FILE, history)
+
+        return record
+    except HTTPException:
+        raise  # 讓 FastAPI 處理已知的 HTTP 異常
+    except Exception as e:
+        traceback.print_exc()
+        raise HTTPException(status_code=500, detail=f"轉譜過程發生錯誤: {str(e)}")
 
 
 @app.get("/api/history")
