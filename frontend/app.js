@@ -4,7 +4,8 @@
  */
 
 // ── 設定 ──
-const API_BASE = 'http://localhost:8000';
+// 動態偵測 API 位址，手機存取時自動使用電腦 IP
+const API_BASE = window.location.origin;
 let currentType = 'chord_sheet';
 let currentResult = null;
 
