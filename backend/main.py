@@ -35,6 +35,7 @@ app.add_middleware(
 # ── 資料儲存 ──
 HISTORY_FILE = Path(__file__).parent / "history.json"
 FAVORITES_FILE = Path(__file__).parent / "favorites.json"
+FRONTEND_DIR = Path(__file__).parent.parent / "frontend"
 
 
 def load_json(path: Path) -> list:
@@ -177,13 +178,47 @@ async def remove_favorite(record_id: str):
     return {"message": "已取消收藏", "favorites": favorites}
 
 
+@app.post("/api/export")
+async def export_to_static():
+    """
+    匯出歷史記錄到前端靜態資料檔案。
+    供 GitHub Pages 部署使用。
+    """
+    history = load_json(HISTORY_FILE)
+    favorites = load_json(FAVORITES_FILE)
+
+    # 合併歷史與收藏（去重）
+    all_ids = set()
+    all_sheets = []
+    for record in history + favorites:
+        if record["id"] not in all_ids:
+            all_ids.add(record["id"])
+            all_sheets.append(record)
+
+    # 寫入前端靜態資料
+    data_dir = FRONTEND_DIR / "data"
+    data_dir.mkdir(exist_ok=True)
+    output_path = data_dir / "sheets.json"
+    save_json(output_path, all_sheets)
+
+    return {
+        "message": f"已匯出 {len(all_sheets)} 筆樂譜到 {output_path}",
+        "count": len(all_sheets),
+        "path": str(output_path),
+    }
+
+
 # ── 掛載前端靜態檔案 ──
-FRONTEND_DIR = Path(__file__).parent.parent / "frontend"
 if FRONTEND_DIR.exists():
     from fastapi.responses import FileResponse
 
     # 提供前端靜態資源
     app.mount("/public", StaticFiles(directory=str(FRONTEND_DIR / "public")), name="public")
+
+    # 掛載 data 目錄（樂譜靜態資料）
+    data_dir = FRONTEND_DIR / "data"
+    data_dir.mkdir(exist_ok=True)
+    app.mount("/data", StaticFiles(directory=str(data_dir)), name="data")
 
     @app.get("/styles.css")
     async def serve_css():

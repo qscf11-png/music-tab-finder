@@ -1,5 +1,6 @@
 <!DOCTYPE html>
 <html lang="zh-TW">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0, user-scalable=yes">
@@ -10,10 +11,13 @@
     <link rel="manifest" href="/public/manifest.json">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+    <link
+        href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap"
+        rel="stylesheet">
     <link rel="stylesheet" href="styles.css">
     <title>🎵 Music Tab Finder - AI 音樂轉譜助手</title>
 </head>
+
 <body>
     <!-- 背景動畫 -->
     <div class="bg-animation">
@@ -63,13 +67,8 @@
                 <div class="input-card glass-card">
                     <div class="input-group">
                         <div class="input-icon">▶️</div>
-                        <input
-                            type="url"
-                            id="youtube-url"
-                            class="url-input"
-                            placeholder="貼上 YouTube 連結... (例：https://www.youtube.com/watch?v=...)"
-                            autocomplete="off"
-                        >
+                        <input type="url" id="youtube-url" class="url-input"
+                            placeholder="貼上 YouTube 連結... (例：https://www.youtube.com/watch?v=...)" autocomplete="off">
                         <button id="paste-btn" class="icon-btn" onclick="pasteFromClipboard()" title="從剪貼簿貼上">
                             📋
                         </button>
@@ -160,6 +159,7 @@
                                 </div>
                             </div>
                             <div class="result-actions">
+                                <button class="action-btn" onclick="shareCurrentSheet()" title="分享 QR Code">📤</button>
                                 <button class="action-btn" onclick="copyToClipboard()" title="複製">📋</button>
                                 <button class="action-btn" onclick="toggleFavorite()" title="收藏">
                                     <span id="fav-icon">☆</span>
@@ -208,6 +208,24 @@
     <!-- Toast 通知 -->
     <div id="toast" class="toast hidden"></div>
 
+    <!-- QR Code 分享 Modal -->
+    <div id="qr-modal" class="modal-overlay hidden" onclick="if(event.target===this)closeQRModal()">
+        <div class="modal-card glass-card">
+            <div class="modal-header">
+                <h3 class="modal-title">📤 分享樂譜</h3>
+                <button class="modal-close" onclick="closeQRModal()">✕</button>
+            </div>
+            <p id="qr-title" class="qr-sheet-title"></p>
+            <div class="qr-image-wrapper">
+                <img id="qr-image" class="qr-image" alt="QR Code" />
+            </div>
+            <p class="qr-hint">掃描 QR Code 即可在手機上開啟樂譜</p>
+            <a id="qr-link" class="qr-link" href="#" target="_blank"></a>
+            <button class="secondary-btn" onclick="copyShareLink()">📋 複製連結</button>
+        </div>
+    </div>
+
     <script src="app.js"></script>
 </body>
+
 </html>

@@ -1,11 +1,12 @@
 // Service Worker - 支援離線檢視已轉換的樂譜
-const CACHE_NAME = 'music-tab-finder-v1';
+const CACHE_NAME = 'music-tab-finder-v2';
 const STATIC_ASSETS = [
     '/',
     '/index.html',
     '/styles.css',
     '/app.js',
     '/manifest.json',
+    '/data/sheets.json',
 ];
 
 // 安裝事件：快取靜態資源
